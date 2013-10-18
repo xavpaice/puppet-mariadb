@@ -18,6 +18,7 @@ class mariadb::params {
   $ssl                 = false
   $restart             = true
   $slave_threads       = $::processorcount * 2
+  $enabled             = true
 
   case $::osfamily {
     'RedHat': {
@@ -52,9 +53,11 @@ class mariadb::params {
       $client_package_names   = ['libmysqlclient18', 'mysql-common', 'mariadb-client']
       $client_package_ensure  = 'installed'
       $server_package_names   = ['mariadb-server']
+      $server_package_ensure  = 'installed'
       $cluster_package_names  = ['mariadb-galera-server']
       $cluster_package_ensure = 'installed'
       $galera_package_name    = 'galera'
+      $galera_package_ensure  = 'installed'
       $socket                 = '/var/run/mysqld/mysqld.sock'
       $pidfile                = '/var/run/mysqld/mysqld.pid'
       $config_file            = '/etc/mysql/my.cnf'

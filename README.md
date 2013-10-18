@@ -36,14 +36,19 @@ Database login information stored in `/root/.my.cnf`.
 ## mariadb::cluster
 Installs the mariadb and supporting galera packages for a cluster.
 
-    class { 'mariadb::cluster':
-        cluster_servers => $mariadb_cluster_servers,
-        config_hash     => {
-          'root_password' => 'foo',
-          'bind_address'  => '0.0.0.0',
-          'restart'       => false,     # manually manage service with galera
-        }
+  class { 'mariadb::cluster':
+    cluster_servers          => ['192.168.1.1', '192.168.1.2', '192.168.1.3']
+    debiansysmaint_password  => 'password',
+    wsrep_sst_password       => 'password',
+    status_password          => 'password',
+    package_names            => 'mariadb-galera-server-5.5',
+    config_hash     => {
+      'root_password' => 'password',
+      'bind_address'  => '::',
+      'restart'       => false,     # manually manage service with galera
     }
+  } 
+
 
 ### mariadb::db
 Creates a database with a user and assign some privileges.

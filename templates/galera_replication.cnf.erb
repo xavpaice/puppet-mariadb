@@ -2,11 +2,12 @@
 
 [mysqld]
 wsrep_provider = /usr/lib/galera/libgalera_smm.so
-wsrep_cluster_address = 'gcomm://<%= @cluster_peer %>'
+wsrep_cluster_address = 'gcomm://<%= @cluster_servers.join(",") %>'
 wsrep_cluster_name = <%= @wsrep_cluster_name %>
 wsrep_sst_auth = '<%= @wsrep_sst_auth %>'
 wsrep_sst_method = <%= @wsrep_sst_method %>
 wsrep_slave_threads = <%= @wsrep_slave_threads %>
+wsrep_retry_autocommit = 0
 
 binlog_format = ROW
 default_storage_engine = InnoDB

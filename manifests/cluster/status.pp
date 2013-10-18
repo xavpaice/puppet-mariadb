@@ -22,8 +22,8 @@ class mariadb::cluster::status (
     ],
   }
 
-  xinetd::server { 'mysqlchk':
-    id     => 'mysqlchk',
+  xinetd::service { 'mysqlchk':
+#    id     => 'mysqlchk',
     server => '/usr/local/bin/clustercheck',
     port   => '9200',
     user   => 'nobody',

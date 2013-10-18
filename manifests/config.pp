@@ -52,7 +52,8 @@ class mariadb::config(
   $default_engine    = 'UNSET',
   $root_group        = $mariadb::params::root_group,
   $restart           = $mariadb::params::restart,
-  $purge_conf_dir    = false
+  $purge_conf_dir    = false,
+  $debiansysmaint_password = undef,
 ) inherits mariadb::params {
 
   File {
@@ -106,20 +107,21 @@ class mariadb::config(
       require   => File['/etc/mysql/conf.d'],
     }
 
-    file { '/root/.my.cnf':
-      content => template('mariadb/my.cnf.pass.erb'),
-      require => Exec['set_mariadb_rootpw'],
-    }
-
     if $etc_root_password {
       file{ '/etc/my.cnf':
         content => template('mariadb/my.cnf.pass.erb'),
         require => Exec['set_mariadb_rootpw'],
       }
+    } else {
+      file { '/root/.my.cnf':
+        ensure  => present,      
+        content => template('mariadb/my.cnf.pass.erb'),
+        require => Exec['set_mariadb_rootpw'],
+      }  
     }
   } else {
     file { '/root/.my.cnf':
-      ensure  => present,
+      ensure  => present,      
     }
   }
 
@@ -138,4 +140,9 @@ class mariadb::config(
     mode    => '0644',
   }
 
+  if $debiansysmaint_password != undef {
+    file { '/etc/mysql/debian.cnf':
+      content => template('mariadb/debian.cnf.erb'),
+    }
+  }
 }

@@ -24,7 +24,7 @@ class mariadb::cluster (
   $status_password,
   $cluster_servers,
   $wsrep_sst_user       = 'root',
-  $wsrep_cluster_name   = 'my_wsrep_cluster',
+  $wsrep_cluster_name   = 'openstack_cluster',
   $status_user          = 'clusterstatus',
   $wsrep_sst_method     = 'mysqldump',
   $wsrep_slave_threads  = $mariadb::params::slave_threads,
@@ -33,6 +33,8 @@ class mariadb::cluster (
   $galera_name          = $mariadb::params::galera_package_name,
   $galera_ensure        = $mariadb::params::galera_package_ensure,
   $config_hash          = {},
+  $enabled              = $mariadb::params::enabled,
+  $service_name         = $mariadb::params::service_name,
 ) inherits mariadb::params {
 
   if $cluster_servers == undef {
@@ -46,11 +48,10 @@ class mariadb::cluster (
   class { 'mariadb::server':
     package_names           => $package_names,
     package_ensure          => $package_ensure,
-    debiansysmaint_password => $debiansysmaint_password,
+#    debiansysmaint_password => $debiansysmaint_password,
     config_hash             => $config_hash,
     enabled                 => $enabled,
   }
-
   class { 'mariadb::cluster::auth':
     wsrep_sst_user     => $wsrep_sst_user,
     wsrep_sst_password => $wsrep_sst_password,
@@ -60,10 +61,7 @@ class mariadb::cluster (
     status_user     => $status_user,
     status_password => $status_password,
   }
-
-  # Find the next server in the list as a peer to sync with
-  $cluster_peer = inline_template("<% (0..cluster_servers.length).each do |i|; if cluster_servers[i] == ipaddress; if (i+1) == cluster_servers.length %><%= cluster_servers[0] %><% else %><%= cluster_servers[i+1] %><% end; end; end %>")
-
+  
   $wsrep_sst_auth = "${wsrep_sst_user}:${wsrep_sst_password}"
 
   file { '/etc/mysql/conf.d/galera_replication.cnf':
@@ -76,5 +74,19 @@ class mariadb::cluster (
       ensure => installed
     }
   }
-
+  
+  # new type to deploy the actual cluster
+  galera_cluster {$wsrep_cluster_name:
+    ensure          => 'present',
+    cluster_servers => $cluster_servers,
+    hostname        => $::fqdn,
+    servicename     => $service_name,
+  }
+  
+  Package[$galera_name] -> 
+    Class['mariadb::server'] -> 
+    Class['mariadb::config'] ->
+    Class['mariadb::cluster::auth'] -> 
+    Class['mariadb::cluster::status'] -> 
+    Galera_cluster[$wsrep_cluster_name]
 }

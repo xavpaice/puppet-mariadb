@@ -18,21 +18,21 @@ class mariadb::server (
   $package_names           = $mariadb::params::server_package_names,
   $package_ensure          = $mariadb::params::server_package_ensure,
   $service_name            = $mariadb::params::service_name,
-  $service_provider        = $mariadb::params::service_provider,
+  #$service_provider        = $mariadb::params::service_provider,
   $client_package_names    = $mariadb::params::client_package_names,
   $client_package_ensure   = $mariadb::params::client_package_ensure,
-  $debiansysmaint_password = undef,
   $config_hash             = {},
   $enabled                 = true,
-  $manage_service          = true
+  $manage_service          = true,
 ) inherits mariadb::params {
 
   class { 'mariadb':
     package_names  => $client_package_names,
     package_ensure => $client_package_ensure
   }
-
-  Class['mariadb::server'] -> Class['mariadb::config']
+  
+  #added mariadb::server
+  Class['mariadb'] -> Class['mariadb::server'] -> Class['mariadb::config']
 
   $config_class = { 'mariadb::config' => $config_hash }
 
@@ -48,12 +48,6 @@ class mariadb::server (
     require => Package[$package_names],
   }
 
-  #if $debiansysmaint_password != undef {
-  #  file { '/etc/mysql/debian.cnf':
-  #    content => template('mariadb/debian.cnf.erb'),
-  #  }
-  #}
-
   if $enabled {
     $service_ensure = 'running'
   } else {
@@ -66,7 +60,7 @@ class mariadb::server (
       name     => $service_name,
       enable   => $enabled,
       require  => Package[$package_names],
-      provider => $service_provider,
+      #provider => $service_provider,
     }
   }
 }
