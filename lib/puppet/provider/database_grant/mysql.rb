@@ -49,7 +49,6 @@ Puppet::Type.type(:database_grant).provide(:mysql) do
     mysqladmin([defaults_file, "flush-privileges"].compact)
   end
 
-  # this parses the
   def split_name(string)
     matches = /^([^@]*)@([^\/]*)(\/(.*))?$/.match(string).captures.compact
     case matches.length
@@ -69,8 +68,11 @@ Puppet::Type.type(:database_grant).provide(:mysql) do
     end
   end
 
+  # TODO these users should already be created, otherwise create user which should be done better
+  # autorequire in the type should sort this out entirely
   def create_row
     unless @resource.should(:privileges).empty?
+      # we have determined that we need to add privs
       name = split_name(@resource[:name])
       case name[:type]
       when :user
@@ -146,15 +148,48 @@ Puppet::Type.type(:database_grant).provide(:mysql) do
     stmt = ''
     where = ''
     all_privs = []
+    privs_hash = { 
+      'create_priv' => 'CREATE',
+      'drop_priv' => 'DROP',
+      'grant_priv' => 'GRANT OPTION',
+      'lock_tables_priv' => 'LOCK TABLES',
+      'references_priv' => 'REFERENCES',
+      'event_priv' => 'EVENT',
+      'alter_priv' => 'ALTER',
+      'delete_priv' => 'DELETE',
+      'index_priv' => 'INDEX',
+      'insert_priv' => 'INSERT',
+      'select_priv' => 'SELECT',
+      'update_priv' => 'UPDATE',
+      'create_tmp_table_priv' => 'CREATE TEMPORARY TABLES',
+      'trigger_priv' => 'TRIGGER',
+      'create_view_priv' => 'CREATE VIEW',
+      'show_view_priv' => 'SHOW VIEW',
+      'alter_routine_priv' => 'ALTER ROUTINE',
+      'create_routine_priv' => 'CREATE ROUTINE',
+      'execute_priv' => 'EXECUTE',
+      'file_priv' => 'FILE',
+      'create_tablespace_priv' => 'CREATE TABLESPACE',
+      'create_user_priv' => 'CREATE USER',
+      'process_priv' => 'PROCESS',
+      'reload_priv' => 'RELOAD',
+      'repl_client_priv' => 'REPLICATION CLIENT',
+      'repl_slave_priv' => 'REPLICATION SLAVE',
+      'show_db_priv' => 'SHOW DATABASES',
+      'shutdown_priv' => 'SHUTDOWN',
+      'super_priv' => 'SUPER'
+    }
+    
+    stmt = 'grant '
+    
+    #setup the array of all_privs for use in validation (and if it's ALL)
     case name[:type]
-    when :user
-      stmt = 'update user set '
-      where = ' where user="%s" and host="%s"' % [ name[:user], name[:host] ]
-      all_privs = user_privs
-    when :db
-      stmt = 'update db set '
-      where = ' where user="%s" and host="%s" and db="%s"' % [ name[:user], name[:host], name[:db] ]
-      all_privs = db_privs
+      when :user
+        where = ' on *.* to "%s"@"%s"' % [ name[:user], name[:host] ]
+        all_privs = user_privs
+      when :db
+        where = ' on %s.* to "%s"@"%s"' % [ name[:db], name[:user], name[:host] ]
+        all_privs = db_privs
     end
 
     if privs[0].downcase == 'all'
@@ -165,14 +200,17 @@ Puppet::Type.type(:database_grant).provide(:mysql) do
     # we don't map! here because the all_privs object has to remain in
     # the same case the DB gave it to us in
     privs = privs.map { |p| p.downcase }
-
+    # privs is now a useful array of lower case priv names that we want to have as the final list for the user
+  
     # puts "stmt:", stmt
-    set = all_privs.collect do |p| "%s = '%s'" % [p, privs.include?(p.downcase) ? 'Y' : 'N'] end.join(', ')
-    # puts "set:", set
+    # make a list of privs suitable for use with the GRANT command in mysql  
+    set = privs_grant = privs.collect { |p| privs_hash[p] }.join(', ')
     stmt = stmt << set << where
-
+    # 
+    
+    # validate that the list of privs is OK for this db/server instance
     validate_privs privs, all_privs
-    mysql([defaults_file, "mysql", "-Be", stmt].compact)
+    mysql([defaults_file, "-Be", stmt].compact)
     mysql_flush
   end
 

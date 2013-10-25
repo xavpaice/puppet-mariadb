@@ -19,7 +19,6 @@
 # Sample Usage:
 #
 class mariadb::cluster (
-  $debiansysmaint_password,
   $wsrep_sst_password,
   $status_password,
   $cluster_servers,
@@ -48,7 +47,6 @@ class mariadb::cluster (
   class { 'mariadb::server':
     package_names           => $package_names,
     package_ensure          => $package_ensure,
-#    debiansysmaint_password => $debiansysmaint_password,
     config_hash             => $config_hash,
     enabled                 => $enabled,
   }

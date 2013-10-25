@@ -62,7 +62,7 @@ class mariadb::config(
     mode   => '0400',
     notify    => $restart ? {
       true => Exec['mariadb-restart'],
-      false => undef,
+      default => undef,
     },
   }
 
@@ -102,7 +102,7 @@ class mariadb::config(
       path      => '/usr/local/sbin:/usr/bin:/usr/local/bin',
       notify    => $restart ? {
         true => Exec['mariadb-restart'],
-        false => undef,
+        default => undef,
       },
       require   => File['/etc/mysql/conf.d'],
     }
@@ -143,6 +143,13 @@ class mariadb::config(
   if $debiansysmaint_password != undef {
     file { '/etc/mysql/debian.cnf':
       content => template('mariadb/debian.cnf.erb'),
+    }
+    exec { 'set_mariadb_debiansysmaint_password':
+      command   => "mysql --defaults-file=/root/.my.cnf -e \"set password for 'debian-sys-maint'@'localhost' = PASSWORD('${debiansysmaint_password}');\"",
+      logoutput => true,
+      unless    => "/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf status > /dev/null",
+      path      => '/usr/local/sbin:/usr/bin:/usr/local/bin',
+      require   => File['/etc/mysql/debian.cnf'],
     }
   }
 }

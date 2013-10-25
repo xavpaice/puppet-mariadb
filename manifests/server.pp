@@ -18,7 +18,6 @@ class mariadb::server (
   $package_names           = $mariadb::params::server_package_names,
   $package_ensure          = $mariadb::params::server_package_ensure,
   $service_name            = $mariadb::params::service_name,
-  #$service_provider        = $mariadb::params::service_provider,
   $client_package_names    = $mariadb::params::client_package_names,
   $client_package_ensure   = $mariadb::params::client_package_ensure,
   $config_hash             = {},
@@ -60,7 +59,6 @@ class mariadb::server (
       name     => $service_name,
       enable   => $enabled,
       require  => Package[$package_names],
-      #provider => $service_provider,
     }
   }
 }

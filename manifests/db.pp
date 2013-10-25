@@ -38,7 +38,7 @@ define mariadb::db (
   $password,
   $charset     = 'utf8',
   $host        = 'localhost',
-  $grant       = 'all',
+  $grant       = ['all'],
   $sql         = '',
   $enforce_sql = false,
   $ensure      = 'present'
