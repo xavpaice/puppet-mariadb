@@ -50,7 +50,7 @@ class mariadb::params {
       $basedir                = '/usr'
       $datadir                = '/var/lib/mysql'
       $service_name           = 'mysql'
-      $client_package_names   = ['libmysqlclient18', 'mysql-common', 'mariadb-client']
+      $client_package_names   = ['libmariadbclient18', 'mariadb-common', 'mariadb-client-5.5', 'mariadb-client-core-5.5', 'libdbd-mysql-perl']
       $client_package_ensure  = 'installed'
       $server_package_names   = ['mariadb-server']
       $server_package_ensure  = 'installed'

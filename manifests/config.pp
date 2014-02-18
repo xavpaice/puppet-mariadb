@@ -149,7 +149,9 @@ class mariadb::config(
       logoutput => true,
       unless    => "/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf status > /dev/null",
       path      => '/usr/local/sbin:/usr/bin:/usr/local/bin',
-      require   => File['/etc/mysql/debian.cnf'],
+      require   => [ File['/etc/mysql/debian.cnf'],
+                     File['/root/.my.cnf'],
+                     Exec['set_mariadb_rootpw'] ],
     }
   }
 }
